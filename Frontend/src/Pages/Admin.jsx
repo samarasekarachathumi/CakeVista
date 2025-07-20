@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { assets } from "../assets/assets";
 import Sidebar from "../Components/Sidebar";
 
+
 function Admin() {
   return (
     <div className="flex">
@@ -23,8 +24,6 @@ function Admin() {
         <div className="p-5">
           <h1 className="text-2xl font-bold">Welcome to the Admin Dashboard</h1>
         </div>
-
-    
       </div>
     </div>
   );

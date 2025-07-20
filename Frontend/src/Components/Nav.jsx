@@ -37,6 +37,11 @@ function Nav() {
         <Link to="/profile">
           <img src={assets.profile} className="w-6 cursor-pointer" alt="Notifications" />
         </Link>
+
+        <Link to="/signup" className="text-white bg-[#c26e82] px-6 py-3 rounded-full hover:bg-[#6d3947]">
+        Sign Up
+    </Link>
+
       </div>
     </div>
   );
