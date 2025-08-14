@@ -17,9 +17,9 @@ connection.once("open", () => {
 });
 
 app.use(express.json());
-
-
 app.use(authenticate);
+
+//add endpoint here
 
 app.listen(process.env.PORT, () => {
   console.log(`Server is running on port ${process.env.PORT}`);
