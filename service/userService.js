@@ -1,7 +1,14 @@
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 import User from "../modals/users/Users.js";
 import Customer from "../modals/users/Customer.js";
 import ShopOwner from "../modals/users/ShopOwner.js";
+import authConstants from '../constant/auth.js';
+import dotenv from "dotenv";
+
+dotenv.config();
+
+const { CUSTOMER, ADMIN, SHOP_OWNER, TOKEN_VALID_TIME } = authConstants;
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -42,7 +49,7 @@ export const registerUser = async (req, res) => {
     let extraData;
 
     // 4. Create role-specific profile
-    if (role === "Customer") {
+    if (role === CUSTOMER) {
       const customer = new Customer({
         userId: user._id,
         address,
@@ -50,7 +57,7 @@ export const registerUser = async (req, res) => {
       });
       await customer.save();
       extraData = customer;
-    } else if (role === "ShopOwner") {
+    } else if (role === SHOP_OWNER) {
       const shopOwner = new ShopOwner({
         userId: user._id,
         shopName,
@@ -89,15 +96,16 @@ export const loginUser = async (req, res) => {
 
     // 3. Fetch role-specific data
     let extraData;
-    if (user.role === "Customer") {
+    if (user.role === CUSTOMER) {
       extraData = await Customer.findOne({ userId: user._id });
-    } else if (user.role === "ShopOwner") {
+    } else if (user.role === SHOP_OWNER) {
       extraData = await ShopOwner.findOne({ userId: user._id });
     }
 
+   
     // 4. Generate JWT token
     const token = jwt.sign({ userId: user._id, role: user.role }, JWT_SECRET, {
-      expiresIn: "2h",
+      expiresIn: TOKEN_VALID_TIME,
     });
 
     // 5. Send response
@@ -108,6 +116,7 @@ export const loginUser = async (req, res) => {
       token,
     });
   } catch (error) {
+    console.error("Login error:", error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -116,7 +125,7 @@ export function isAdmin(req) {
   if (req.user == null) {
     return false;
   }
-  if (req.user.role != "Admin") {
+  if (req.user.role != ADMIN) {
     return false;
   }
   return true;
@@ -126,7 +135,7 @@ export function isCustomer(req) {
   if (req.user == null) {
     return false;
   }
-  if (req.user.role != "Customer") {
+  if (req.user.role != CUSTOMER) {
     return false;
   }
   return true;
@@ -136,7 +145,7 @@ export function isShopOwner(req) {
   if (req.user == null) {
     return false;
   }
-  if (req.user.role != "ShopOwner") {
+  if (req.user.role != SHOP_OWNER) {
     return false;
   }
   return true;

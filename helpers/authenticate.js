@@ -1,5 +1,8 @@
 import jwt from "jsonwebtoken";
 import authConstants from '../constant/auth.js';
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const { AUTH_HEADER, BEARER_PREFIX, EMPTY_STRING } = authConstants;
 

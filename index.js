@@ -13,7 +13,6 @@ const port = process.env.PORT;
 
 app.use(express.json());
 app.use(cors());
-
 app.use(authenticate);
 
 // MongoDB connection
@@ -25,10 +24,6 @@ connection.once("open", () => {
 
 //add endpoint here
 app.use("/api/users", userController)
-
-app.get("/", (req, res) => {
-  res.send("Welcome to the API");
-});
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
