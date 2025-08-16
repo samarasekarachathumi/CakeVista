@@ -1,16 +1,16 @@
 import Order from "../modals/orders/orders.js";
 import Product from "../modals/product/product.js";
 import mongoose from "mongoose";
-import {isCustomer, isShopOwner} from "../service/userService.js"
+import { isCustomer, isShopOwner } from "../service/userService.js";
 
 // Save a new order
 export const createOrder = async (req, res) => {
   if (!isCustomer(req) || !isShopOwner(req)) {
-      return res.status(403).json({
-        success: false,
-        message: "Access denied. Only customers can create orders.",
-      });
-    }
+    return res.status(403).json({
+      success: false,
+      message: "Access denied. Only customers can create orders.",
+    });
+  }
   try {
     const { customer_id, shop_id, items, delivery_address, delivery_date } =
       req.body;
@@ -33,7 +33,11 @@ export const createOrder = async (req, res) => {
           throw new Error("Product not found.");
         }
 
-        const basePrice = product.base_price;
+        if (product.discount_price) {
+          basePrice = product.discount_price;
+        } else {
+          basePrice = product.base_price;
+        }
         let customPrice = 0;
 
         // Add price for selected customizations
@@ -136,17 +140,19 @@ export const getOrderById = async (req, res) => {
     res.status(200).json({ order });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Failed to retrieve order", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Failed to retrieve order", error: error.message });
   }
 };
 
 export const getOrdersByCustomer = async (req, res) => {
-    if (!isCustomer(req)) {
-      return res.status(403).json({
-        success: false,
-        message: "Access denied. Only customers can view their orders.",
-      });
-    }
+  if (!isCustomer(req)) {
+    return res.status(403).json({
+      success: false,
+      message: "Access denied. Only customers can view their orders.",
+    });
+  }
   try {
     const { customer_id } = req.params;
 
@@ -157,13 +163,17 @@ export const getOrdersByCustomer = async (req, res) => {
     const orders = await Order.find({ customer_id }).populate("shop_id");
 
     if (!orders || orders.length === 0) {
-      return res.status(404).json({ message: "No orders found for this customer." });
+      return res
+        .status(404)
+        .json({ message: "No orders found for this customer." });
     }
 
     res.status(200).json({ orders });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Failed to retrieve orders", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Failed to retrieve orders", error: error.message });
   }
 };
 
@@ -184,13 +194,17 @@ export const getOrdersByShop = async (req, res) => {
     const orders = await Order.find({ shop_id }).populate("customer_id");
 
     if (!orders || orders.length === 0) {
-      return res.status(404).json({ message: "No orders found for this shop." });
+      return res
+        .status(404)
+        .json({ message: "No orders found for this shop." });
     }
 
     res.status(200).json({ orders });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Failed to retrieve orders", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Failed to retrieve orders", error: error.message });
   }
 };
 
@@ -198,7 +212,8 @@ export const updateOrderStatus = async (req, res) => {
   if (!isShopOwner(req)) {
     return res.status(403).json({
       success: false,
-      message: "Access denied. Only customers and shop owners can update orders.",
+      message:
+        "Access denied. Only customers and shop owners can update orders.",
     });
   }
   try {
@@ -218,10 +233,14 @@ export const updateOrderStatus = async (req, res) => {
     order.status = status;
     await order.save();
 
-    res.status(200).json({ message: "Order status updated successfully", order });
+    res
+      .status(200)
+      .json({ message: "Order status updated successfully", order });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Failed to update order status", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Failed to update order status", error: error.message });
   }
 };
 
@@ -229,7 +248,8 @@ export const deleteOrder = async (req, res) => {
   if (!isCustomer(req) && !isShopOwner(req)) {
     return res.status(403).json({
       success: false,
-      message: "Access denied. Only customers and shop owners can delete orders.",
+      message:
+        "Access denied. Only customers and shop owners can delete orders.",
     });
   }
   try {
@@ -248,7 +268,9 @@ export const deleteOrder = async (req, res) => {
     res.status(200).json({ message: "Order deleted successfully." });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Failed to delete order", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Failed to delete order", error: error.message });
   }
 };
 
@@ -276,10 +298,17 @@ export const updatePaymentStatus = async (req, res) => {
     order.paymentStatus = paymentStatus;
     await order.save();
 
-    res.status(200).json({ message: "Order payment status updated successfully", order });
+    res
+      .status(200)
+      .json({ message: "Order payment status updated successfully", order });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Failed to update order payment status", error: error.message });
+    res
+      .status(500)
+      .json({
+        message: "Failed to update order payment status",
+        error: error.message,
+      });
   }
 };
 
@@ -287,7 +316,8 @@ export const updateDeliveryDateAndStatus = async (req, res) => {
   if (!isShopOwner(req)) {
     return res.status(403).json({
       success: false,
-      message: "Access denied. Only shop owners can update delivery date and status.",
+      message:
+        "Access denied. Only shop owners can update delivery date and status.",
     });
   }
   try {
@@ -308,9 +338,19 @@ export const updateDeliveryDateAndStatus = async (req, res) => {
     order.status = status;
     await order.save();
 
-    res.status(200).json({ message: "Order delivery date and status updated successfully", order });
+    res
+      .status(200)
+      .json({
+        message: "Order delivery date and status updated successfully",
+        order,
+      });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Failed to update order delivery date and status", error: error.message });
+    res
+      .status(500)
+      .json({
+        message: "Failed to update order delivery date and status",
+        error: error.message,
+      });
   }
 };

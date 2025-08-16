@@ -83,6 +83,10 @@ const productSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
+    discount_price: {
+      type: Number,
+      required: false,
+    },
     category: {
       type: String,
       enum: ["Birthday", "Wedding", "Cupcake", "Anniversary", "Other"],
