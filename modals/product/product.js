@@ -29,6 +29,7 @@ const customizationSchema = new mongoose.Schema({
     {
       name: {
         type: String,
+        enum: ["1Lbs", "2Lbs", "3Lbs", "4Lbs", "5Lbs"],
         required: false,
       },
       price: {
