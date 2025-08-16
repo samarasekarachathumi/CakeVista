@@ -2,7 +2,7 @@ import Product from "../modals/product/product.js";
 import { isShopOwner } from "./userService.js";
 
 export const createProduct = async (req, res) => {
-  if (!isShopOwner(req.user)) {
+  if (!isShopOwner(req)) {
     return res.status(403).json({
       success: false,
       message: "Access denied. Only shop owners can create products.",
@@ -49,7 +49,7 @@ export const createProduct = async (req, res) => {
 };
 
 export const getProductsByShopOwnerId = async (shopOwnerId) => {
-  if (!isShopOwner(req.user)) {
+  if (!isShopOwner(req)) {
     return res.status(403).json({
       success: false,
       message: "Access denied. Only shop owners can create products.",
@@ -81,7 +81,7 @@ export const getProductById = async (productId) => {
 };
 
 export const updateProduct = async (productId, updateData) => {
-  if (!isShopOwner(req.user)) {
+  if (!isShopOwner(req)) {
     return res.status(403).json({
       success: false,
       message: "Access denied. Only shop owners can create products.",

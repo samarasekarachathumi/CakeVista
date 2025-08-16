@@ -5,7 +5,7 @@ import {isCustomer, isShopOwner} from "../service/userService.js"
 
 // Save a new order
 export const createOrder = async (req, res) => {
-  if (!isCustomer(req.user) || !isShopOwner(req.user)) {
+  if (!isCustomer(req) || !isShopOwner(req)) {
       return res.status(403).json({
         success: false,
         message: "Access denied. Only customers can create orders.",
@@ -114,7 +114,7 @@ export const createOrder = async (req, res) => {
 };
 
 export const getOrderById = async (req, res) => {
-  if (!isCustomer(req.user) && !isShopOwner(req.user)) {
+  if (!isCustomer(req) && !isShopOwner(req)) {
     return res.status(403).json({
       success: false,
       message: "Access denied. Only customers and shop owners can view orders.",
@@ -141,7 +141,7 @@ export const getOrderById = async (req, res) => {
 };
 
 export const getOrdersByCustomer = async (req, res) => {
-    if (!isCustomer(req.user)) {
+    if (!isCustomer(req)) {
       return res.status(403).json({
         success: false,
         message: "Access denied. Only customers can view their orders.",
@@ -168,7 +168,7 @@ export const getOrdersByCustomer = async (req, res) => {
 };
 
 export const getOrdersByShop = async (req, res) => {
-  if (!isShopOwner(req.user)) {
+  if (!isShopOwner(req)) {
     return res.status(403).json({
       success: false,
       message: "Access denied. Only shop owners can view orders.",
@@ -195,7 +195,7 @@ export const getOrdersByShop = async (req, res) => {
 };
 
 export const updateOrderStatus = async (req, res) => {
-  if (!isCustomer(req.user) && !isShopOwner(req.user)) {
+  if (!isShopOwner(req)) {
     return res.status(403).json({
       success: false,
       message: "Access denied. Only customers and shop owners can update orders.",
@@ -226,7 +226,7 @@ export const updateOrderStatus = async (req, res) => {
 };
 
 export const deleteOrder = async (req, res) => {
-  if (!isCustomer(req.user) && !isShopOwner(req.user)) {
+  if (!isCustomer(req) && !isShopOwner(req)) {
     return res.status(403).json({
       success: false,
       message: "Access denied. Only customers and shop owners can delete orders.",
@@ -253,7 +253,7 @@ export const deleteOrder = async (req, res) => {
 };
 
 export const updatePaymentStatus = async (req, res) => {
-  if (!isShopOwner(req.user)) {
+  if (!isShopOwner(req)) {
     return res.status(403).json({
       success: false,
       message: "Access denied. Only shop owners can update payment status.",
@@ -284,7 +284,7 @@ export const updatePaymentStatus = async (req, res) => {
 };
 
 export const updateDeliveryDateAndStatus = async (req, res) => {
-  if (!isShopOwner(req.user)) {
+  if (!isShopOwner(req)) {
     return res.status(403).json({
       success: false,
       message: "Access denied. Only shop owners can update delivery date and status.",
@@ -304,7 +304,7 @@ export const updateDeliveryDateAndStatus = async (req, res) => {
       return res.status(404).json({ message: "Order not found." });
     }
 
-    order.deliveryDate = deliveryDate;
+    order.delivery_date = deliveryDate;
     order.status = status;
     await order.save();
 
