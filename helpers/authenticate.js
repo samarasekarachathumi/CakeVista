@@ -1,8 +1,11 @@
 import jwt from "jsonwebtoken";
+import authConstants from '../constant/auth.js';
 import dotenv from "dotenv";
-import { AUTH_HEADER, BEARER_PREFIX, EMPTY_STRING } from '../constant/auth.js';
 
 dotenv.config();
+
+const { AUTH_HEADER, BEARER_PREFIX, EMPTY_STRING } = authConstants;
+
 
 const authenticate = (req, res, next) => {
   const value = req.header(AUTH_HEADER);
