@@ -4,6 +4,8 @@ import dotenv from "dotenv";
 import cors from "cors";
 import authenticate from "./helpers/authenticate.js";
 import userController from "./controller/userController.js";
+import productController from "./controller/productController.js";
+import orderController from "./controller/ordersController.js";
 
 dotenv.config();
 const app = express();
@@ -23,7 +25,9 @@ connection.once("open", () => {
 });
 
 //add endpoint here
-app.use("/api/users", userController)
+app.use("/api/users", userController);
+app.use("/api/products", productController);
+app.use("/api/orders", orderController);
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);

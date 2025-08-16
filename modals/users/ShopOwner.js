@@ -16,12 +16,26 @@ const shopOwnerSchema = new Schema(
       required: true,
       trim: true,
     },
-
-    shopAddress: {
-      type: String,
-      trim: true,
-    },
-
+    shopAddress: [
+      {
+        streetAddress: {
+          type: String,
+          required: false,
+        },
+        city: {
+          type: String,
+          required: false,
+        },
+        district: {
+          type: String,
+          required: false,
+        },
+        province: {
+          type: String,
+          required: false,
+        },
+      },
+    ],
     shopLocation: {
       type: {
         type: String,
