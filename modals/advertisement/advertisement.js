@@ -40,7 +40,7 @@ const advertisementSchema = new Schema(
     },
     adPosition: {
       type: String,
-      enum: ["top", "popup", "left-side", "right-side"],
+      enum: ["top", "popup"],
       default: "top",
     },
     paymentStatus: {
