@@ -69,9 +69,7 @@ export const registerUser = async (req, res) => {
     }
 
     res.status(201).json({
-      message: `${role} registered successfully`,
-      user,
-      extraData,
+      message: `${role} registered successfully`
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -108,10 +106,18 @@ export const loginUser = async (req, res) => {
       expiresIn: TOKEN_VALID_TIME,
     });
 
+    const loginUser = {
+      id: user._id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      role: user.role,
+    };
+
     // 5. Send response
     res.status(200).json({
       message: "Login successful",
-      user,
+      user: loginUser,
       extraData,
       token,
     });
