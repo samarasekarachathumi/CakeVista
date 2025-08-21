@@ -1,5 +1,5 @@
 import Product from "../modals/product/product.js";
-import { isShopOwner } from "./userService.js";
+import { isShopOwner, getShopOwnerByUserId} from "./userService.js";
 
 export const createProduct = async (req, res) => {
   if (!isShopOwner(req)) {
@@ -10,31 +10,37 @@ export const createProduct = async (req, res) => {
   }
   try {
     const {
-      shop_id,
       name,
       description,
-      base_price,
-      discount_price,
-      category,
+      basePrice,
+      discountPrice,
+      categories,
       images,
       availabilityStatus,
+      stock,
       customization,
     } = req.body;
 
+    const shopOwner = await getShopOwnerByUserId(req);
+
     const newProduct = new Product({
-      shop_id,
+      shop_id: shopOwner._id,
       name,
       description,
-      discount_price,
-      base_price,
-      category,
+      basePrice,
+      discountPrice,
+      categories,
       images,
-      availabilityStatus,
+      // Combine stock and status into a nested object
+      availability: {
+        stock,
+        status: availabilityStatus
+      },
       customization,
     });
-
+    console.info('newProduct:', newProduct);
     const savedProduct = await newProduct.save();
-
+    console.info('Product saved:', savedProduct._id);
     return res.status(201).json({
       success: true,
       message: "Product created successfully",
@@ -50,17 +56,22 @@ export const createProduct = async (req, res) => {
   }
 };
 
-export const getProductsByShopOwnerId = async (shopOwnerId) => {
+export const getProductsByShopOwnerId = async (req, res) => {
   if (!isShopOwner(req)) {
     return res.status(403).json({
       success: false,
-      message: "Access denied. Only shop owners can create products.",
+      message: "Access denied. Only shop owners can view their products.",
     });
   }
   try {
+    const { shopOwnerId } = req.params;
     const products = await Product.find({ shop_id: shopOwnerId });
-    return products;
+    return res.status(200).json({
+      success: true,
+      data: products,
+    });
   } catch (error) {
+    console.error("Error retrieving products:", error);
     return res.status(500).json({
       success: false,
       message: "Server error. Could not retrieve products.",
@@ -69,11 +80,22 @@ export const getProductsByShopOwnerId = async (shopOwnerId) => {
   }
 };
 
-export const getProductById = async (productId) => {
+export const getProductById = async (req, res) => {
   try {
+    const { productId } = req.params;
     const product = await Product.findById(productId);
-    return product;
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found.",
+      });
+    }
+    return res.status(200).json({
+      success: true,
+      data: product,
+    });
   } catch (error) {
+    console.error("Error retrieving product:", error);
     return res.status(500).json({
       success: false,
       message: "Server error. Could not retrieve product.",
@@ -82,14 +104,27 @@ export const getProductById = async (productId) => {
   }
 };
 
-export const updateProduct = async (productId, updateData) => {
+export const updateProduct = async (req, res) => {
   if (!isShopOwner(req)) {
     return res.status(403).json({
       success: false,
-      message: "Access denied. Only shop owners can create products.",
+      message: "Access denied. Only shop owners can update products.",
     });
   }
   try {
+    const { productId } = req.params;
+    const updateData = req.body;
+    
+    // Check if stock or availabilityStatus are being updated
+    if (updateData.stock !== undefined || updateData.availabilityStatus !== undefined) {
+      updateData.availability = {
+        stock: updateData.stock,
+        status: updateData.availabilityStatus,
+      };
+      delete updateData.stock;
+      delete updateData.availabilityStatus;
+    }
+
     const updatedProduct = await Product.findByIdAndUpdate(
       productId,
       updateData,
@@ -98,8 +133,19 @@ export const updateProduct = async (productId, updateData) => {
         runValidators: true,
       }
     );
-    return updatedProduct;
+    if (!updatedProduct) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found.",
+      });
+    }
+    return res.status(200).json({
+      success: true,
+      message: "Product updated successfully.",
+      data: updatedProduct,
+    });
   } catch (error) {
+    console.error("Error updating product:", error);
     return res.status(500).json({
       success: false,
       message: "Server error. Could not update product.",
@@ -108,20 +154,28 @@ export const updateProduct = async (productId, updateData) => {
   }
 };
 
-export const deleteProduct = async (productId) => {
-  if (!isShopOwner(req.user)) {
+export const deleteProduct = async (req, res) => {
+  if (!isShopOwner(req)) {
     return res.status(403).json({
       success: false,
-      message: "Access denied. Only shop owners can create products.",
+      message: "Access denied. Only shop owners can delete products.",
     });
   }
   try {
-    await Product.findByIdAndDelete(productId);
+    const { productId } = req.params;
+    const product = await Product.findByIdAndDelete(productId);
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found.",
+      });
+    }
     return res.status(200).json({
       success: true,
       message: "Product deleted successfully.",
     });
   } catch (error) {
+    console.error("Error deleting product:", error);
     return res.status(500).json({
       success: false,
       message: "Server error. Could not delete product.",
@@ -130,7 +184,7 @@ export const deleteProduct = async (productId) => {
   }
 };
 
-export const getAllProducts = async () => {
+export const getAllProducts = async (req, res) => {
   try {
     const products = await Product.find();
     return res.status(200).json({
@@ -138,6 +192,7 @@ export const getAllProducts = async () => {
       data: products,
     });
   } catch (error) {
+    console.error("Error retrieving all products:", error);
     return res.status(500).json({
       success: false,
       message: "Server error. Could not retrieve products.",
