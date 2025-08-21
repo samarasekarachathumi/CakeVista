@@ -1,5 +1,5 @@
 import Advertisement from "../modals/advertisement/advertisement.js";
-import { isShopOwner, isAdmin } from "./userService.js";
+import { isShopOwner, isAdmin, getShopOwnerByReq } from "./userService.js";
 
 export const createAdvertisement = async (req, res) => {
   if (!isShopOwner(req)) {
@@ -11,7 +11,6 @@ export const createAdvertisement = async (req, res) => {
   }
   try {
     const {
-      shopOwnerId,
       title,
       description,
       imageUrl,
@@ -23,8 +22,9 @@ export const createAdvertisement = async (req, res) => {
       paymentMethod
     } = req.body;
 
+    const shopOwner = await getShopOwnerByReq(req);
     const advertisement = new Advertisement({
-      shopOwnerId,
+      shopOwnerId: shopOwner._id,
       title,
       description,
       imageUrl,
