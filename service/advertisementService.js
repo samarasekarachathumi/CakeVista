@@ -1,12 +1,12 @@
 import Advertisement from "../modals/advertisement/advertisement.js";
 import { isShopOwner, isAdmin } from "./userService.js";
 
-export const createAdvertisement = async (adData) => {
-  if (!isShopOwner(req) || !isAdmin(req)) {
+export const createAdvertisement = async (req, res) => {
+  if (!isShopOwner(req)) {
     return res.status(403).json({
       success: false,
       message:
-        "Access denied. Only shop owners and admins can create advertisements.",
+        "Access denied. Only shop owners can create advertisements.",
     });
   }
   try {
@@ -18,8 +18,10 @@ export const createAdvertisement = async (adData) => {
       startDate,
       endDate,
       adPosition,
+      price,
       paymentStatus,
-    } = adData;
+      paymentMethod
+    } = req.body;
 
     const advertisement = new Advertisement({
       shopOwnerId,
@@ -27,15 +29,21 @@ export const createAdvertisement = async (adData) => {
       description,
       imageUrl,
       startDate,
+      price,
       endDate,
+      paymentMethod,
       adPosition: adPosition || "top",
       paymentStatus: paymentStatus || "pending",
       isActive: false,
     });
 
-    await advertisement.save();
+    const createdAdvertisement = await advertisement.save();
 
-    return advertisement;
+    return res.status(201).json({
+      success: true,
+      message: "Advertisement created successfully.",
+      data: createdAdvertisement,
+    });
   } catch (error) {
     console.error("Error creating advertisement:", error);
     return res.status(500).json({
@@ -45,6 +53,7 @@ export const createAdvertisement = async (adData) => {
     });
   }
 };
+
 
 export const getAllAdvertisements = async () => {
   if (!isAdmin(req)) {
@@ -56,6 +65,25 @@ export const getAllAdvertisements = async () => {
   try {
     const advertisements = await Advertisement.find();
     return advertisements;
+  } catch (error) {
+    console.error("Error fetching advertisements:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error. Could not retrieve advertisements.",
+      error: error.message,
+    });
+  }
+};
+
+export const getAdvertisementByShop = async (req, res) => {
+  const { shopOwnerId } = req.params;
+  try {
+    const advertisements = await Advertisement.find({ shopOwnerId });
+    return res.status(200).json({
+      success: true,
+      message: "Advertisements fetched successfully.",
+      data: advertisements,
+    });
   } catch (error) {
     console.error("Error fetching advertisements:", error);
     return res.status(500).json({
@@ -90,7 +118,8 @@ export const updateAdvertisement = async (adId, updateData) => {
   }
 };
 
-export const deleteAdvertisement = async (adId) => {
+export const deleteAdvertisement = async (req, res) => {
+  const { adId } = req.params;
   if (!isShopOwner(req)) {
     return res.status(403).json({
       success: false,
@@ -99,7 +128,10 @@ export const deleteAdvertisement = async (adId) => {
   }
   try {
     await Advertisement.findByIdAndDelete(adId);
-    return { success: true, message: "Advertisement deleted successfully." };
+    return res.status(200).json({
+      success: true,
+      message: "Advertisement deleted successfully.",
+    });
   } catch (error) {
     console.error("Error deleting advertisement:", error);
     return res.status(500).json({

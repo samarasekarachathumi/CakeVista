@@ -19,7 +19,7 @@ const advertisementSchema = new Schema(
       trim: true,
     },
     imageUrl: {
-      type: String,
+      type: [String],
       required: true,
     },
     price: {
@@ -28,15 +28,15 @@ const advertisementSchema = new Schema(
     },
     startDate: {
       type: Date,
-      required: true,
+      required: false,
     },
     endDate: {
       type: Date,
-      required: true,
+      required: false,
     },
     isActive: {
       type: Boolean,
-      default: false,
+      default: true,
     },
     adPosition: {
       type: String,
@@ -47,6 +47,10 @@ const advertisementSchema = new Schema(
       type: String,
       enum: ["pending", "completed", "failed"],
       default: "pending",
+    },
+    paymentMethod: {
+      type: String,
+      required: false,
     },
   },
   { timestamps: true }
