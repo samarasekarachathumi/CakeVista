@@ -159,7 +159,7 @@ export function isShopOwner(req) {
 
 export const getShopOwnerByUserId = async (req, res) => {
   try {
-    const shopOwner = await ShopOwner.findOne({ userId: req.user.id });
+    const shopOwner = await ShopOwner.findOne({ userId: req.user.userId });
     return shopOwner;
   } catch (error) {
     console.error("Error fetching shop owner:", error);
