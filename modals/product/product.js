@@ -1,70 +1,18 @@
 import mongoose from "mongoose";
 
-const customizationSchema = new mongoose.Schema({
-  colorOptions: [
-    {
-      name: {
-        type: String,
-        required: false,
-      },
-      price: {
-        type: Number,
-        default: 0,
-      },
-    },
-  ],
-  flavourOptions: [
-    {
-      name: {
-        type: String,
-        required: false,
-      },
-      price: {
-        type: Number,
-        default: 0,
-      },
-    },
-  ],
-  sizeOptions: [
-    {
-      name: {
-        type: String,
-        enum: ["1Lbs", "2Lbs", "3Lbs", "4Lbs", "5Lbs"],
-        required: false,
-      },
-      price: {
-        type: Number,
-        default: 0,
-      },
-    },
-  ],
-  extraToppings: [
-    {
-      name: {
-        type: String,
-        required: false,
-      },
-      price: {
-        type: Number,
-        default: 0,
-      },
-    },
-  ],
-  customMessage: [
-    {
-      isAvailable: {
-        type: Boolean,
-        default: true,
-      },
-      price: {
-        type: Number,
-        default: 0,
-      },
-    },
-  ],
+// Sub-schema for customization options to ensure consistent validation
+const CustomizationSchema = new mongoose.Schema({
+  color: [{ name: { type: String }, price: { type: Number, default: 0 } }],
+  flavor: [{ name: { type: String }, price: { type: Number, default: 0 } }],
+  size: [{ name: { type: String }, price: { type: Number, default: 0 } }],
+  toppings: [{ name: { type: String }, price: { type: Number, default: 0 } }],
+  customMessage: {
+    isAvailable: { type: Boolean, default: false },
+    price: { type: Number, default: 0 },
+  },
 });
 
-const productSchema = new mongoose.Schema(
+const ProductSchema = new mongoose.Schema(
   {
     shop_id: {
       type: mongoose.Schema.Types.ObjectId,
@@ -80,33 +28,51 @@ const productSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
-    base_price: {
+    basePrice: {
       type: Number,
       required: true,
+      min: 0,
     },
-    discount_price: {
+    discountPrice: {
       type: Number,
-      required: false,
+      default: null,
+      min: 0,
     },
-    category: {
-      type: String,
-      enum: ["Birthday", "Wedding", "Cupcake", "Anniversary", "Other"],
-      default: "Other",
+    // New: Use a Map to store categories as key-value pairs
+    categories: {
+      type: Map,
+      of: [String],
+      required: true,
     },
     images: {
       type: [String],
       default: [],
     },
-    availabilityStatus: {
-      type: String,
-      enum: ["Available", "Out of Stock"],
-      default: "Available",
+    // New: Explicitly define the nested availability object
+    availability: {
+      stock: {
+        type: Number,
+        default: 0,
+      },
+      status: {
+        type: String,
+        enum: ["In Stock", "Out of Stock"],
+        default: "Out of Stock",
+      },
     },
-    customization: customizationSchema,
+    customization: {
+      type: CustomizationSchema,
+      default: {},
+    },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    minimize: false, // Prevents Mongoose from stripping out empty objects
+  }
 );
 
-const Product = mongoose.model("Product", productSchema);
+ProductSchema.index({ shop_id: 1, name: 1 }, { unique: true });
+
+const Product = mongoose.model("Product", ProductSchema);
 
 export default Product;
