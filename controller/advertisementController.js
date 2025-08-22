@@ -5,21 +5,17 @@ import {
   getAllAdvertisements,
   updateAdvertisement,
   deleteAdvertisement,
-  updateAdvertisementStatus,
-  updateIsActiveAdvertisement,
-  updateIsActiveStatus,
-  getAdvertisementByShop
+  getAdvertisementByShop,
+  getActiveAdvertisement
 } from "../service/advertisementService.js";
 
 const router = express.Router();
 
 router.post("/", createAdvertisement);
 router.get("/", getAllAdvertisements);
-router.get("/shop/:shopOwnerId", getAdvertisementByShop);
-router.put("/:id", updateAdvertisement);
+router.get("/shop/", getAdvertisementByShop);
+router.patch("/:id", updateAdvertisement);
 router.delete("/:id", deleteAdvertisement);
-router.patch("/:id/status", updateAdvertisementStatus);
-router.patch("/:id/active", updateIsActiveAdvertisement);
-router.patch("/:id/active-status", updateIsActiveStatus);
+router.get("/active/:adPosition", getActiveAdvertisement);
 
 export default router;

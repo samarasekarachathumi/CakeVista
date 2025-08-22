@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 import User from "../modals/users/Users.js";
 import Customer from "../modals/users/Customer.js";
 import ShopOwner from "../modals/users/ShopOwner.js";
-import authConstants from '../constant/auth.js';
+import authConstants from "../constant/auth.js";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -69,7 +69,7 @@ export const registerUser = async (req, res) => {
     }
 
     res.status(201).json({
-      message: `${role} registered successfully`
+      message: `${role} registered successfully`,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -86,6 +86,12 @@ export const loginUser = async (req, res) => {
       return res.status(400).json({ message: "Invalid email or password" });
     }
 
+    if (user.isActive === false) {
+      return res
+        .status(403)
+        .json({ message: "Your Login is Disabled. Please contact support." });
+    }
+
     // 2. Check password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
@@ -100,7 +106,6 @@ export const loginUser = async (req, res) => {
       extraData = await ShopOwner.findOne({ userId: user._id });
     }
 
-   
     // 4. Generate JWT token
     const token = jwt.sign({ userId: user._id, role: user.role }, JWT_SECRET, {
       expiresIn: TOKEN_VALID_TIME,
@@ -159,11 +164,76 @@ export function isShopOwner(req) {
 
 export const getShopOwnerByReq = async (req) => {
   try {
-    console.log(req.user)
     const shopOwner = await ShopOwner.findOne({ userId: req.user.userId });
     return shopOwner;
   } catch (error) {
     console.error("Error fetching shop owner:", error);
     throw new Error("Server error. Could not retrieve shop owner.");
+  }
+};
+
+export const getAllUser = async (req, res) => {
+  if(!isAdmin(req)) {
+    return res.status(403).json({
+      success: false,
+      message: "Access denied. Admins only."
+    });
+  }
+  try {
+    const users = await User.find();
+    res.status(200).json({
+      success: true,
+      message: "Users fetched successfully.",
+      data: users,
+    });
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error. Could not fetch users.",
+      error: error.message,
+    });
+  }
+};
+
+export const updateUserDetails = async (req, res) => {
+  const { id } = req.params;
+  const updateFields = req.body;
+
+  try {
+    const updatedUser = await User.findByIdAndUpdate(
+      { _id: id },
+      { $set: updateFields },
+      { new: true, runValidators: true }
+    );
+
+    if (updatedUser.role) {
+      if (updateFields.role === "ShopOwner") {
+        await ShopOwner.findByIdAndUpdate(
+          { userId: id },
+          { $set: updateFields },
+          { new: true, runValidators: true }
+        );
+      } else if (updateFields.role === "Customer") {
+        await Customer.findByIdAndUpdate(
+          { userId: id },
+          { $set: updateFields },
+          { new: true, runValidators: true }
+        );
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `${updatedUser.firstName}'s details updated successfully.`,
+      data: updatedUser,
+    });
+  } catch (error) {
+    console.error("Error updating user details:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error. Could not update user details.",
+      error: error.message,
+    });
   }
 };
