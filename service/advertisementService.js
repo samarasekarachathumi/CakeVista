@@ -1,12 +1,12 @@
 import Advertisement from "../modals/advertisement/advertisement.js";
+import ShopOwner from "../modals/users/ShopOwner.js";
 import { isShopOwner, isAdmin, getShopOwnerByReq } from "./userService.js";
 
 export const createAdvertisement = async (req, res) => {
   if (!isShopOwner(req)) {
     return res.status(403).json({
       success: false,
-      message:
-        "Access denied. Only shop owners can create advertisements.",
+      message: "Access denied. Only shop owners can create advertisements.",
     });
   }
   try {
@@ -19,7 +19,7 @@ export const createAdvertisement = async (req, res) => {
       adPosition,
       price,
       paymentStatus,
-      paymentMethod
+      paymentMethod,
     } = req.body;
 
     const shopOwner = await getShopOwnerByReq(req);
@@ -54,8 +54,7 @@ export const createAdvertisement = async (req, res) => {
   }
 };
 
-
-export const getAllAdvertisements = async () => {
+export const getAllAdvertisements = async (req, res) => {
   if (!isAdmin(req)) {
     return res.status(403).json({
       success: false,
@@ -64,13 +63,30 @@ export const getAllAdvertisements = async () => {
   }
   try {
     const advertisements = await Advertisement.find();
-    return advertisements;
-  } catch (error) {
-    console.error("Error fetching advertisements:", error);
+    const shopDetails = await ShopOwner.find({
+      _id: { $in: advertisements.map((ad) => ad.shopOwnerId) },
+    });
+
+    const shopMap = {};
+    shopDetails.forEach((shop) => {
+      shopMap[shop._id] = shop;
+    });
+
+    const adsWithShopDetails = advertisements.map((ad) => ({
+      ...ad.toObject(),
+      shopDetails: shopMap[ad.shopOwnerId] || null,
+    }));
+
+    return res.status(200).json({
+      success: true,
+      message: "Advertisements fetched successfully.",
+      data: adsWithShopDetails,
+    });
+  } catch (err) {
     return res.status(500).json({
       success: false,
-      message: "Server error. Could not retrieve advertisements.",
-      error: error.message,
+      message: "Failed to fetch advertisements",
+      error: err.message,
     });
   }
 };
@@ -78,7 +94,10 @@ export const getAllAdvertisements = async () => {
 export const getAdvertisementByShop = async (req, res) => {
   const { shopOwnerId } = req.params;
   try {
-    const advertisements = await Advertisement.find({ shopOwnerId });
+    const shopOwner = await getShopOwnerByReq(req);
+    const advertisements = await Advertisement.find({
+      shopOwnerId: shopOwner._id,
+    });
     return res.status(200).json({
       success: true,
       message: "Advertisements fetched successfully.",
@@ -209,7 +228,6 @@ export const updateIsActiveAdvertisement = async (req, res) => {
     });
   }
 };
-
 
 export const updateIsActiveStatus = async (req, res) => {
   const { adId } = req.params;

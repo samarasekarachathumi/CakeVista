@@ -15,7 +15,7 @@ const router = express.Router();
 
 router.post("/", createAdvertisement);
 router.get("/", getAllAdvertisements);
-router.get("/shop/:shopOwnerId", getAdvertisementByShop);
+router.get("/shop/", getAdvertisementByShop);
 router.put("/:id", updateAdvertisement);
 router.delete("/:id", deleteAdvertisement);
 router.patch("/:id/status", updateAdvertisementStatus);
