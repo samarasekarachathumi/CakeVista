@@ -92,7 +92,6 @@ export const getAllAdvertisements = async (req, res) => {
 };
 
 export const getAdvertisementByShop = async (req, res) => {
-  const { shopOwnerId } = req.params;
   try {
     const shopOwner = await getShopOwnerByReq(req);
     const advertisements = await Advertisement.find({
@@ -113,32 +112,46 @@ export const getAdvertisementByShop = async (req, res) => {
   }
 };
 
-export const updateAdvertisement = async (adId, updateData) => {
-  if (!isShopOwner(req)) {
+export const updateAdvertisement = async (req, res) => {
+  const { id } = req.params;
+  const updateFields = req.body;
+  if (!isAdmin(req)) {
     return res.status(403).json({
       success: false,
       message: "Access denied. Only admins can update advertisements.",
     });
   }
   try {
-    const updatedAdvertisement = await Advertisement.findByIdAndUpdate(
-      adId,
-      updateData,
+    const patchedAdvertisement = await Advertisement.findByIdAndUpdate(
+      { _id: id },
+      { $set: updateFields },
       { new: true, runValidators: true }
     );
-    return updatedAdvertisement;
+
+    if (!patchedAdvertisement) {
+      return res.status(404).json({
+        success: false,
+        message: "Advertisement not found.",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Advertisement patched successfully.",
+      data: patchedAdvertisement,
+    });
   } catch (error) {
-    console.error("Error updating advertisement:", error);
+    console.error("Error patching advertisement:", error);
     return res.status(500).json({
       success: false,
-      message: "Server error. Could not update advertisement.",
+      message: "Server error. Could not patch advertisement.",
       error: error.message,
     });
   }
 };
 
 export const deleteAdvertisement = async (req, res) => {
-  const { adId } = req.params;
+  const { id } = req.params;
   if (!isShopOwner(req)) {
     return res.status(403).json({
       success: false,
@@ -146,7 +159,9 @@ export const deleteAdvertisement = async (req, res) => {
     });
   }
   try {
-    await Advertisement.findByIdAndDelete(adId);
+    await Advertisement.findByIdAndDelete(
+      { _id: id }
+    );
     return res.status(200).json({
       success: true,
       message: "Advertisement deleted successfully.",
@@ -161,112 +176,25 @@ export const deleteAdvertisement = async (req, res) => {
   }
 };
 
-export const updateAdvertisementStatus = async (adId, paymentStatus) => {
-  if (!isShopOwner(req)) {
-    return res.status(403).json({
-      success: false,
-      message:
-        "Access denied. Only shop owners can update advertisement status.",
-    });
-  }
+export const getActiveAdvertisement = async (req, res) => {
+  const { adPosition } = req.params;
+  console.log("Fetching active advertisements for position:", adPosition);
   try {
-    const updatedAdvertisement = await Advertisement.findByIdAndUpdate(
-      adId,
-      { paymentStatus },
-      { new: true, runValidators: true }
-    );
-    return updatedAdvertisement;
-  } catch (error) {
-    console.error("Error updating advertisement status:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Server error. Could not update advertisement status.",
-      error: error.message,
+    const activeAdvertisements = await Advertisement.find({
+      isActive: true,
+      adPosition: adPosition,
     });
-  }
-};
-
-export const updateIsActiveAdvertisement = async (req, res) => {
-  const { adId } = req.params;
-  const { isActive } = req.body;
-  if (!isAdmin(req)) {
-    return res.status(403).json({
-      success: false,
-      message: "Access denied. Only admins can update advertisement status.",
-    });
-  }
-  try {
-    const ad = await Advertisement.findById(adId);
-    if (!ad) {
-      return res.status(404).json({
-        success: false,
-        message: "Advertisement not found",
-      });
-    }
-
-    if (isActive) {
-      await Advertisement.updateMany(
-        { adPosition: ad.adPosition, _id: { $ne: ad._id } },
-        { $set: { isActive: false } }
-      );
-    }
-
-    ad.isActive = isActive;
-    await ad.save();
 
     return res.status(200).json({
       success: true,
-      message: "Advertisement status updated successfully",
-      advertisement: ad,
+      message: "Active advertisements fetched successfully.",
+      data: activeAdvertisements
     });
   } catch (error) {
-    console.error("Error updating advertisement status:", error);
+    console.error("Error fetching active advertisements:", error);
     return res.status(500).json({
       success: false,
-      message: "Server error. Could not update advertisement status.",
-      error: error.message,
-    });
-  }
-};
-
-export const updateIsActiveStatus = async (req, res) => {
-  const { adId } = req.params;
-  const { isActive } = req.body;
-  if (!isAdmin(req)) {
-    return res.status(403).json({
-      success: false,
-      message: "Access denied. Only admins can update advertisement status.",
-    });
-  }
-  try {
-    const ad = await Advertisement.findById(adId);
-    if (!ad) {
-      return res.status(404).json({
-        success: false,
-        message: "Advertisement not found",
-      });
-    }
-
-    if (isActive) {
-      await Advertisement.updateMany(
-        { adPosition: ad.adPosition, _id: { $ne: ad._id } },
-        { $set: { isActive: false } }
-      );
-    }
-
-    ad.isActive = isActive;
-    await ad.save();
-
-    return res.status(200).json({
-      success: true,
-      message: "Advertisement status updated successfully",
-      advertisement: ad,
-    });
-  } catch (error) {
-    console.error("Error updating advertisement status:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Server error. Could not update advertisement status.",
+      message: "Server error. Could not fetch advertisements.",
       error: error.message,
     });
   }

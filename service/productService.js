@@ -1,5 +1,5 @@
 import Product from "../modals/product/product.js";
-import { isShopOwner, getShopOwnerByUserId} from "./userService.js";
+import { isShopOwner, getShopOwnerByReq} from "./userService.js";
 
 export const createProduct = async (req, res) => {
   if (!isShopOwner(req)) {
@@ -21,7 +21,7 @@ export const createProduct = async (req, res) => {
       customization,
     } = req.body;
 
-    const shopOwner = await getShopOwnerByUserId(req);
+    const shopOwner = await getShopOwnerByReq(req);
 
     const newProduct = new Product({
       shop_id: shopOwner._id,
