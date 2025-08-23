@@ -178,11 +178,13 @@ export const deleteAdvertisement = async (req, res) => {
 
 export const getActiveAdvertisement = async (req, res) => {
   const { adPosition } = req.params;
-  console.log("Fetching active advertisements for position:", adPosition);
   try {
     const activeAdvertisements = await Advertisement.find({
       isActive: true,
       adPosition: adPosition,
+      paymentStatus: "completed",
+      startDate: { $lte: new Date() },
+      endDate: { $gte: new Date() },
     });
 
     return res.status(200).json({
