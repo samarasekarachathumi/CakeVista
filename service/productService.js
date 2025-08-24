@@ -1,5 +1,5 @@
 import Product from "../modals/product/product.js";
-import { isShopOwner, getShopOwnerByUserId} from "./userService.js";
+import { isShopOwner, getShopOwnerByReq} from "./userService.js";
 
 export const createProduct = async (req, res) => {
   if (!isShopOwner(req)) {
@@ -21,7 +21,7 @@ export const createProduct = async (req, res) => {
       customization,
     } = req.body;
 
-    const shopOwner = await getShopOwnerByUserId(req);
+    const shopOwner = await getShopOwnerByReq(req);
 
     const newProduct = new Product({
       shop_id: shopOwner._id,
@@ -56,7 +56,7 @@ export const createProduct = async (req, res) => {
   }
 };
 
-export const getProductsByShopOwnerId = async (req, res) => {
+export const getProductsByShopOwner = async (req, res) => {
   if (!isShopOwner(req)) {
     return res.status(403).json({
       success: false,
@@ -64,8 +64,8 @@ export const getProductsByShopOwnerId = async (req, res) => {
     });
   }
   try {
-    const { shopOwnerId } = req.params;
-    const products = await Product.find({ shop_id: shopOwnerId });
+    const shopOwner = await getShopOwnerByReq(req);
+    const products = await Product.find({ shop_id: shopOwner._id });
     return res.status(200).json({
       success: true,
       data: products,
@@ -75,6 +75,80 @@ export const getProductsByShopOwnerId = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Server error. Could not retrieve products.",
+      error: error.message,
+    });
+  }
+};
+
+export const getProductsByShopOwnerId = async (req, res) => {
+  try {
+    const shopOwner = req.params.shopOwnerId;
+    const products = await Product.find({ shop_id: shopOwner });
+    return res.status(200).json({
+      success: true,
+      data: products,
+    });
+  } catch (error) {
+    console.error("Error retrieving products:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error. Could not retrieve products.",
+      error: error.message,
+    });
+  }
+};
+
+
+export const updateProduct = async (req, res) => {
+  if (!isShopOwner(req)) {
+    return res.status(403).json({
+      success: false,
+      message: "Access denied. Only shop owners can update products.",
+    });
+  }
+  try {
+    const { productId } = req.params;
+    const shopOwner = await getShopOwnerByReq(req);
+    const updateData = req.body;
+
+    // Check if the product belongs to the shop owner
+    const product = await Product.findOne({ _id: productId, shop_id: shopOwner._id });
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found or access denied.",
+      });
+    }
+
+    // Handle nested 'availability' object update
+    // This allows for partial updates of stock or status
+    if (updateData.stock !== undefined) {
+      product.availability.stock = updateData.stock;
+    }
+    if (updateData.availabilityStatus !== undefined) {
+      product.availability.status = updateData.availabilityStatus;
+    }
+
+    // Apply other updates
+    const fieldsToUpdate = ['name', 'description', 'basePrice', 'discountPrice', 'categories', 'images', 'customization'];
+    fieldsToUpdate.forEach(field => {
+      if (updateData[field] !== undefined) {
+        product[field] = updateData[field];
+      }
+    });
+
+    const updatedProduct = await product.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Product updated successfully.",
+      data: updatedProduct,
+    });
+  } catch (error) {
+    console.error("Error updating product:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error. Could not update product.",
       error: error.message,
     });
   }
@@ -104,56 +178,6 @@ export const getProductById = async (req, res) => {
   }
 };
 
-export const updateProduct = async (req, res) => {
-  if (!isShopOwner(req)) {
-    return res.status(403).json({
-      success: false,
-      message: "Access denied. Only shop owners can update products.",
-    });
-  }
-  try {
-    const { productId } = req.params;
-    const updateData = req.body;
-    
-    // Check if stock or availabilityStatus are being updated
-    if (updateData.stock !== undefined || updateData.availabilityStatus !== undefined) {
-      updateData.availability = {
-        stock: updateData.stock,
-        status: updateData.availabilityStatus,
-      };
-      delete updateData.stock;
-      delete updateData.availabilityStatus;
-    }
-
-    const updatedProduct = await Product.findByIdAndUpdate(
-      productId,
-      updateData,
-      {
-        new: true,
-        runValidators: true,
-      }
-    );
-    if (!updatedProduct) {
-      return res.status(404).json({
-        success: false,
-        message: "Product not found.",
-      });
-    }
-    return res.status(200).json({
-      success: true,
-      message: "Product updated successfully.",
-      data: updatedProduct,
-    });
-  } catch (error) {
-    console.error("Error updating product:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Server error. Could not update product.",
-      error: error.message,
-    });
-  }
-};
-
 export const deleteProduct = async (req, res) => {
   if (!isShopOwner(req)) {
     return res.status(403).json({
@@ -163,13 +187,21 @@ export const deleteProduct = async (req, res) => {
   }
   try {
     const { productId } = req.params;
-    const product = await Product.findByIdAndDelete(productId);
+    const shopOwner = await getShopOwnerByReq(req);
+    
+    // Find and delete the product, ensuring it belongs to the logged-in shop owner
+    const product = await Product.findOneAndDelete({
+      _id: productId,
+      shop_id: shopOwner._id,
+    });
+    
     if (!product) {
       return res.status(404).json({
         success: false,
-        message: "Product not found.",
+        message: "Product not found or access denied.",
       });
     }
+    
     return res.status(200).json({
       success: true,
       message: "Product deleted successfully.",
@@ -187,9 +219,11 @@ export const deleteProduct = async (req, res) => {
 export const getAllProducts = async (req, res) => {
   try {
     const products = await Product.find();
+
     return res.status(200).json({
       success: true,
-      data: products,
+      data: products, // can be [] if no products
+      count: products.length, // 👈 optional, useful for frontend
     });
   } catch (error) {
     console.error("Error retrieving all products:", error);
