@@ -6,6 +6,7 @@ import {
   getShopOwnerByReq,
   isCustomer,
   isShopOwner,
+  isAdmin
 } from "../service/userService.js";
 
 // Save a new order
@@ -379,3 +380,27 @@ export const updateDeliveryDateAndStatus = async (req, res) => {
     });
   }
 };
+
+export const getAllOrders = async (req, res) => {
+  if (!isAdmin(req)) {
+    return res.status(403).json({
+      success: false,
+      message: "Access denied. Only admins, shop owners, and customers can view orders.",
+    });
+  }
+  try {
+    const orders = await Order.find();
+    res.status(200).json({
+      success: true,
+      message: "Orders fetched successfully.",
+      data: orders,
+    });
+  } catch (error) {
+    console.error("Error fetching orders:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error. Could not fetch orders.",
+      error: error.message,
+    });
+  }
+}

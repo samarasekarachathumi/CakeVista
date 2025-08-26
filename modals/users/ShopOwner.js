@@ -36,15 +36,17 @@ const shopOwnerSchema = new Schema(
         },
       },
     ],
-    shopLocation: {
-      type: {
-        type: String,
-        enum: ["Point"],
-        default: "Point",
-      },
-      coordinates: {
-        type: [Number],
-      },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+    profilePicture: {
+      type: String,
+      required: false,
+    },
+    description: {
+      type: String,
+      required: false,
     },
   },
   { timestamps: true }

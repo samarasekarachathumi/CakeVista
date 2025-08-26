@@ -8,7 +8,7 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const { CUSTOMER, ADMIN, SHOP_OWNER, TOKEN_VALID_TIME } = authConstants;
+const { CUSTOMER, ADMIN, SHOP_OWNER } = authConstants;
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -107,9 +107,7 @@ export const loginUser = async (req, res) => {
     }
 
     // 4. Generate JWT token
-    const token = jwt.sign({ userId: user._id, role: user.role }, JWT_SECRET, {
-      expiresIn: TOKEN_VALID_TIME,
-    });
+    const token = jwt.sign({ userId: user._id, role: user.role }, JWT_SECRET);
 
     const loginUser = {
       id: user._id,
@@ -183,10 +181,10 @@ export const getCustomerByReq = async (req) => {
 };
 
 export const getAllUser = async (req, res) => {
-  if(!isAdmin(req)) {
+  if (!isAdmin(req)) {
     return res.status(403).json({
       success: false,
-      message: "Access denied. Admins only."
+      message: "Access denied. Admins only.",
     });
   }
   try {
