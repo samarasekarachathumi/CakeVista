@@ -1,19 +1,26 @@
 import Order from "../modals/orders/orders.js";
 import Product from "../modals/product/product.js";
 import mongoose from "mongoose";
-import { getCustomerByReq, isCustomer, isShopOwner } from "../service/userService.js";
+import {
+  getCustomerByReq,
+  getShopOwnerByReq,
+  isCustomer,
+  isShopOwner,
+} from "../service/userService.js";
 
 // Save a new order
 export const createOrder = async (req, res) => {
-  if (!isCustomer(req)) { // Access control check
+  if (!isCustomer(req)) {
+    // Access control check
     return res.status(403).json({
       success: false,
       message: "Access denied. Only customers can create orders.",
     });
   }
   try {
-    const { orderItems, address, paymentMethod, instructions, customer_id } = req.body;
-    
+    const { orderItems, address, paymentMethod, instructions, customer_id } =
+      req.body;
+
     if (!orderItems || orderItems.length === 0) {
       return res.status(400).json({ message: "No items in the order." });
     }
@@ -51,7 +58,7 @@ export const createOrder = async (req, res) => {
           const product = await Product.findById(item.productId); // Product is already fetched, but let's re-fetch for simplicity
           const basePrice = product.discountPrice || product.basePrice;
           let customPrice = 0;
-          
+
           const selected_customizations = {};
           const payloadCustomization = item.customization;
 
@@ -63,10 +70,16 @@ export const createOrder = async (req, res) => {
               );
               if (sizeOption) {
                 customPrice += sizeOption.price;
-                selected_customizations.size = { name: sizeOption.name, price: sizeOption.price };
+                selected_customizations.size = {
+                  name: sizeOption.name,
+                  price: sizeOption.price,
+                };
               }
             }
-            if (payloadCustomization.toppings && payloadCustomization.toppings.length > 0) {
+            if (
+              payloadCustomization.toppings &&
+              payloadCustomization.toppings.length > 0
+            ) {
               const toppings = [];
               for (const toppingName of payloadCustomization.toppings) {
                 const toppingOption = product.customization.toppings.find(
@@ -74,7 +87,10 @@ export const createOrder = async (req, res) => {
                 );
                 if (toppingOption) {
                   customPrice += toppingOption.price;
-                  toppings.push({ name: toppingOption.name, price: toppingOption.price });
+                  toppings.push({
+                    name: toppingOption.name,
+                    price: toppingOption.price,
+                  });
                 }
               }
               selected_customizations.extra_toppings = toppings;
@@ -86,7 +102,7 @@ export const createOrder = async (req, res) => {
               };
             }
           }
-          
+
           const itemPrice = (basePrice + customPrice) * item.quantity;
           totalAmount += itemPrice;
 
@@ -107,23 +123,23 @@ export const createOrder = async (req, res) => {
         payment_type: paymentMethod,
         delivery_address: address,
         instructions: instructions,
+        payment_status: paymentMethod === "card" ? "Paid" : "Pending",
       });
 
       const savedOrder = await newOrder.save();
       createdOrders.push(savedOrder);
     }
-    
-    // Respond with all created orders
-    res.status(201).json({ 
-      message: "Orders created successfully", 
-      orders: createdOrders 
-    });
 
+    // Respond with all created orders
+    res.status(201).json({
+      message: "Orders created successfully",
+      orders: createdOrders,
+    });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ 
-      message: "Failed to create orders", 
-      error: error.message 
+    res.status(500).json({
+      message: "Failed to create orders",
+      error: error.message,
     });
   }
 };
@@ -164,13 +180,13 @@ export const getOrdersByCustomer = async (req, res) => {
     });
   }
   try {
-    const { customer_id } = req.params;
+    const customer = await getCustomerByReq(req);
+    const customer_id = customer._id;
 
-    if (!mongoose.Types.ObjectId.isValid(customer_id)) {
-      return res.status(400).json({ message: "Invalid customer ID." });
-    }
-
-    const orders = await Order.find({ customer_id }).populate("shop_id");
+    const orders = await Order.find({ customer_id }).populate({
+        path: "items.product_id",
+        model: "Product",
+      });
 
     if (!orders || orders.length === 0) {
       return res
@@ -195,13 +211,15 @@ export const getOrdersByShop = async (req, res) => {
     });
   }
   try {
-    const { shop_id } = req.params;
+    const shopOwner = await getShopOwnerByReq(req); // Reusing getCustomerByReq to fetch shop owner
+    const shop_id = shopOwner._id;
 
-    if (!mongoose.Types.ObjectId.isValid(shop_id)) {
-      return res.status(400).json({ message: "Invalid shop ID." });
-    }
-
-    const orders = await Order.find({ shop_id }).populate("customer_id");
+    const orders = await Order.find({ shop_id })
+      .populate("customer_id")
+      .populate({
+        path: "items.product_id",
+        model: "Product",
+      });
 
     if (!orders || orders.length === 0) {
       return res
@@ -240,12 +258,15 @@ export const updateOrderStatus = async (req, res) => {
       return res.status(404).json({ message: "Order not found." });
     }
 
-    order.status = status;
-    await order.save();
+    order.order_status = status;
+    const updatedOrder = await order.save();
 
     res
       .status(200)
-      .json({ message: "Order status updated successfully", order });
+      .json({
+        message: "Order status updated successfully",
+        order: updatedOrder,
+      });
   } catch (error) {
     console.error(error);
     res
@@ -313,12 +334,10 @@ export const updatePaymentStatus = async (req, res) => {
       .json({ message: "Order payment status updated successfully", order });
   } catch (error) {
     console.error(error);
-    res
-      .status(500)
-      .json({
-        message: "Failed to update order payment status",
-        error: error.message,
-      });
+    res.status(500).json({
+      message: "Failed to update order payment status",
+      error: error.message,
+    });
   }
 };
 
@@ -348,19 +367,15 @@ export const updateDeliveryDateAndStatus = async (req, res) => {
     order.status = status;
     await order.save();
 
-    res
-      .status(200)
-      .json({
-        message: "Order delivery date and status updated successfully",
-        order,
-      });
+    res.status(200).json({
+      message: "Order delivery date and status updated successfully",
+      order,
+    });
   } catch (error) {
     console.error(error);
-    res
-      .status(500)
-      .json({
-        message: "Failed to update order delivery date and status",
-        error: error.message,
-      });
+    res.status(500).json({
+      message: "Failed to update order delivery date and status",
+      error: error.message,
+    });
   }
 };

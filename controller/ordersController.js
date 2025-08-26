@@ -12,11 +12,12 @@ import {
 
 const router = express.Router();
 
+
 router.post("/", createOrder);
+router.get("/customer", getOrdersByCustomer);
+router.get("/shop", getOrdersByShop);
 router.get("/:id", getOrderById);
-router.get("/customer/:customer_id", getOrdersByCustomer);
-router.get("/shop/:shop_id", getOrdersByShop);
-router.put("/:id/status", updateOrderStatus);
+router.patch("/:id/status", updateOrderStatus);
 router.delete("/:id", deleteOrder);
 router.put("/:id/payment-status", updatePaymentStatus);
 router.put("/:id/delivery-date-status", updateDeliveryDateAndStatus);
