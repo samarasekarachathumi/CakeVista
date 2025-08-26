@@ -5,8 +5,6 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const { AUTH_HEADER, BEARER_PREFIX, EMPTY_STRING } = authConstants;
-
-
 const authenticate = (req, res, next) => {
   const value = req.header(AUTH_HEADER);
 
@@ -20,7 +18,6 @@ const authenticate = (req, res, next) => {
     if (err || !decoded) {
       return res.status(403).json({ message: "Unauthorized" });
     }
-
     req.user = decoded;
     next();
   });
