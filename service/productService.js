@@ -234,3 +234,20 @@ export const getAllProducts = async (req, res) => {
     });
   }
 };
+
+export const getLeastAddedProducts = async (req, res) => {
+  try {
+    const products = await Product.find().sort({ createdAt: 1 }).limit(12);
+    return res.status(200).json({
+      success: true,
+      data: products,
+    });
+  } catch (error) {
+    console.error("Error retrieving least added products:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error. Could not retrieve least added products.",
+      error: error.message,
+    });
+  }
+};

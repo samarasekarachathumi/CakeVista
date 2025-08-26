@@ -7,7 +7,8 @@ import {
   updateOrderStatus,
   deleteOrder,
   updatePaymentStatus,
-  updateDeliveryDateAndStatus
+  updateDeliveryDateAndStatus,
+  getAllOrders
 } from "../service/ordersService.js";
 
 const router = express.Router();
@@ -20,5 +21,6 @@ router.put("/:id/status", updateOrderStatus);
 router.delete("/:id", deleteOrder);
 router.put("/:id/payment-status", updatePaymentStatus);
 router.put("/:id/delivery-date-status", updateDeliveryDateAndStatus);
+router.get("/", getAllOrders);
 
 export default router;

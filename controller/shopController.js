@@ -5,7 +5,7 @@ import {
   getActiveShops, 
   getShopDetailsShopOwnerId, 
   updateShopDetails,
-  getProductsByShopOwnerId
+  getProductsByShopOwnerId,
 } from '../service/shopService.js';
 
 const shopController = express.Router();
@@ -16,5 +16,6 @@ shopController.get("/active", getActiveShops);
 shopController.get("/owner", getShopDetailsShopOwnerId);
 shopController.patch("/owner/:id", updateShopDetails);
 shopController.get("/owner/:id/products", getProductsByShopOwnerId);
+
 
 export default shopController;
