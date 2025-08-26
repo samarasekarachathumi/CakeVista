@@ -170,6 +170,16 @@ export const getShopOwnerByReq = async (req) => {
   }
 };
 
+export const getCustomerByReq = async (req) => {
+  try {
+    const customer = await Customer.findOne({ userId: req.user.userId });
+    return customer;
+  } catch (error) {
+    console.error("Error fetching customer:", error);
+    throw new Error("Server error. Could not retrieve customer.");
+  }
+};
+
 export const getAllUser = async (req, res) => {
   if (!isAdmin(req)) {
     return res.status(403).json({

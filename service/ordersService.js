@@ -1,122 +1,132 @@
 import Order from "../modals/orders/orders.js";
 import Product from "../modals/product/product.js";
 import mongoose from "mongoose";
-import { isCustomer, isShopOwner } from "../service/userService.js";
+import { getCustomerByReq, isCustomer, isShopOwner } from "../service/userService.js";
 
 // Save a new order
 export const createOrder = async (req, res) => {
-  if (!isCustomer(req) || !isShopOwner(req)) {
+  if (!isCustomer(req)) { // Access control check
     return res.status(403).json({
       success: false,
       message: "Access denied. Only customers can create orders.",
     });
   }
   try {
-    const { customer_id, shop_id, items, delivery_address, delivery_date } =
-      req.body;
-
-    if (!items || items.length === 0) {
+    const { orderItems, address, paymentMethod, instructions, customer_id } = req.body;
+    
+    if (!orderItems || orderItems.length === 0) {
       return res.status(400).json({ message: "No items in the order." });
     }
 
-    let totalAmount = 0;
+    const customer = await getCustomerByReq(req);
+    const customerId = customer._id;
 
-    // Process each item
-    const orderItems = await Promise.all(
-      items.map(async (item) => {
-        if (!mongoose.Types.ObjectId.isValid(item.product_id)) {
-          throw new Error("Invalid product ID.");
-        }
+    // 1. Group order items by shop
+    const shopsMap = new Map();
+    for (const item of orderItems) {
+      if (!mongoose.Types.ObjectId.isValid(item.productId)) {
+        throw new Error("Invalid product ID.");
+      }
 
-        const product = await Product.findById(item.product_id);
-        if (!product) {
-          throw new Error("Product not found.");
-        }
+      // Fetch the product to get its shop_id
+      const product = await Product.findById(item.productId);
+      if (!product) {
+        throw new Error(`Product with ID ${item.productId} not found.`);
+      }
 
-        if (product.discount_price) {
-          basePrice = product.discount_price;
-        } else {
-          basePrice = product.base_price;
-        }
-        let customPrice = 0;
+      const shopId = product.shop_id.toString();
+      if (!shopsMap.has(shopId)) {
+        shopsMap.set(shopId, { shop_id: product.shop_id, items: [] });
+      }
+      shopsMap.get(shopId).items.push(item);
+    }
 
-        // Add price for selected customizations
-        if (item.selected_customizations) {
-          const custom = item.selected_customizations;
+    const createdOrders = [];
 
-          if (custom.color) {
-            const colorOption = product.customization.colorOptions.find(
-              (c) => c.name === custom.color.name
-            );
-            customPrice += colorOption ? colorOption.price : 0;
-          }
+    // 2. Create a separate order for each shop
+    for (const [shopId, shopData] of shopsMap.entries()) {
+      let totalAmount = 0;
+      const orderItemsForShop = await Promise.all(
+        shopData.items.map(async (item) => {
+          const product = await Product.findById(item.productId); // Product is already fetched, but let's re-fetch for simplicity
+          const basePrice = product.discountPrice || product.basePrice;
+          let customPrice = 0;
+          
+          const selected_customizations = {};
+          const payloadCustomization = item.customization;
 
-          if (custom.flavour) {
-            const flavourOption = product.customization.flavourOptions.find(
-              (f) => f.name === custom.flavour.name
-            );
-            customPrice += flavourOption ? flavourOption.price : 0;
-          }
-
-          if (custom.size) {
-            const sizeOption = product.customization.sizeOptions.find(
-              (s) => s.name === custom.size.name
-            );
-            customPrice += sizeOption ? sizeOption.price : 0;
-          }
-
-          if (custom.extra_toppings && custom.extra_toppings.length > 0) {
-            custom.extra_toppings.forEach((topping) => {
-              const toppingOption = product.customization.extraToppings.find(
-                (t) => t.name === topping.name
+          if (payloadCustomization) {
+            // Logic to calculate custom price and structure customizations
+            if (payloadCustomization.size) {
+              const sizeOption = product.customization.size.find(
+                (s) => s.name === payloadCustomization.size
               );
-              customPrice += toppingOption ? toppingOption.price : 0;
-            });
+              if (sizeOption) {
+                customPrice += sizeOption.price;
+                selected_customizations.size = { name: sizeOption.name, price: sizeOption.price };
+              }
+            }
+            if (payloadCustomization.toppings && payloadCustomization.toppings.length > 0) {
+              const toppings = [];
+              for (const toppingName of payloadCustomization.toppings) {
+                const toppingOption = product.customization.toppings.find(
+                  (t) => t.name === toppingName
+                );
+                if (toppingOption) {
+                  customPrice += toppingOption.price;
+                  toppings.push({ name: toppingOption.name, price: toppingOption.price });
+                }
+              }
+              selected_customizations.extra_toppings = toppings;
+            }
+            if (payloadCustomization.cakeText) {
+              selected_customizations.custom_message = {
+                message: payloadCustomization.cakeText,
+                price: 0,
+              };
+            }
           }
+          
+          const itemPrice = (basePrice + customPrice) * item.quantity;
+          totalAmount += itemPrice;
 
-          if (custom.custom_message) {
-            const messageOption = product.customization.customMessage.find(
-              (m) => m.message === custom.custom_message.message
-            );
-            customPrice += messageOption ? messageOption.price : 0;
-          }
-        }
+          return {
+            product_id: item.productId,
+            quantity: item.quantity,
+            selected_customizations,
+            price: itemPrice,
+          };
+        })
+      );
 
-        const itemPrice = (basePrice + customPrice) * item.quantity;
-        totalAmount += itemPrice;
+      const newOrder = new Order({
+        customer_id: customerId,
+        shop_id: shopData.shop_id,
+        items: orderItemsForShop,
+        total_amount: totalAmount,
+        payment_type: paymentMethod,
+        delivery_address: address,
+        instructions: instructions,
+      });
 
-        return {
-          product_id: item.product_id,
-          quantity: item.quantity,
-          selected_customizations: item.selected_customizations,
-          price: itemPrice,
-        };
-      })
-    );
-
-    // Create the order
-    const order = new Order({
-      customer_id,
-      shop_id,
-      items: orderItems,
-      total_amount: totalAmount,
-      delivery_address,
-      delivery_date,
+      const savedOrder = await newOrder.save();
+      createdOrders.push(savedOrder);
+    }
+    
+    // Respond with all created orders
+    res.status(201).json({ 
+      message: "Orders created successfully", 
+      orders: createdOrders 
     });
 
-    const savedOrder = await order.save();
-
-    res
-      .status(201)
-      .json({ message: "Order created successfully", order: savedOrder });
   } catch (error) {
     console.error(error);
-    res
-      .status(500)
-      .json({ message: "Failed to create order", error: error.message });
+    res.status(500).json({ 
+      message: "Failed to create orders", 
+      error: error.message 
+    });
   }
 };
-
 export const getOrderById = async (req, res) => {
   if (!isCustomer(req) && !isShopOwner(req)) {
     return res.status(403).json({

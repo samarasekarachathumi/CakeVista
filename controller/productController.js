@@ -2,6 +2,7 @@ import express from "express";
 import { 
   createProduct,
   getProductsByShopOwnerId,
+  getProductsByShopOwner,
   getProductById,
   updateProduct,
   deleteProduct,
@@ -11,10 +12,12 @@ import {
 const router = express.Router();
 
 router.post("/create", createProduct);
+router.get("/manage", getProductsByShopOwner);
+router.get("/all", getAllProducts);
 router.get("/shop/:shopOwnerId", getProductsByShopOwnerId);
 router.get("/:productId", getProductById);
 router.put("/:productId", updateProduct);
 router.delete("/:productId", deleteProduct);
-router.get("/", getAllProducts);
+
 
 export default router;
