@@ -1,0 +1,25 @@
+:root {
+  font-family: 'Poppins', 'Segoe UI', 'Roboto', sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color: #333333;
+  background-color: #FFF5E1;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background: #FFF5E1;
+}
+
+a {
+  color: #E75480;
+}
+a:hover {
+  color: #C7436A;
+}
