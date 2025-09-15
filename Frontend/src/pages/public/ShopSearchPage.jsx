@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { Col, Input, Row, Select, Space, Tag, Typography } from "antd";
 import ShopCard from "../../shared/components/ShopCard.jsx";
-import { PROVINCES, DISTRICTS } from "../../shared/data/mockShops.js";
+import { PROVINCES, DISTRICTS } from "../../shared/data/ProvincesAndDistricts.js";
 import { getAllActiveShops } from "../../service/shopService";
 import { useNotification } from "../../shared/contexts/NotificationContext.jsx";
 
