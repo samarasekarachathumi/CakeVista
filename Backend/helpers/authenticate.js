@@ -9,8 +9,8 @@ const authenticate = (req, res, next) => {
   const value = req.header(AUTH_HEADER);
 
   if (!value) {
-    return next();
-  }
+    return next(); 
+  } 
 
   const token = value.replace(BEARER_PREFIX, EMPTY_STRING);
 

@@ -44,7 +44,7 @@ export const createOrder = async (req, res) => {
 
       const shopId = product.shop_id.toString();
       if (!shopsMap.has(shopId)) {
-        shopsMap.set(shopId, { shop_id: product.shop_id, items: [] });
+        shopsMap.set(shopId, { shop_id: product.shop_id, items: [] });//Map keys work better with strings
       }
       shopsMap.get(shopId).items.push(item);
     }
@@ -133,6 +133,7 @@ export const createOrder = async (req, res) => {
 
     // Respond with all created orders
     res.status(201).json({
+      
       message: "Orders created successfully",
       orders: createdOrders,
     });

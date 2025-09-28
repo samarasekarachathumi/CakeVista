@@ -132,7 +132,7 @@ export const updateProduct = async (req, res) => {
     // Apply other updates
     const fieldsToUpdate = ['name', 'description', 'basePrice', 'discountPrice', 'categories', 'images', 'customization'];
     fieldsToUpdate.forEach(field => {
-      if (updateData[field] !== undefined) {
+      if (updateData[field] !== undefined) { //check this update field data has value
         product[field] = updateData[field];
       }
     });
@@ -223,7 +223,7 @@ export const getAllProducts = async (req, res) => {
     return res.status(200).json({
       success: true,
       data: products, // can be [] if no products
-      count: products.length, // 👈 optional, useful for frontend
+      count: products.length, // 
     });
   } catch (error) {
     console.error("Error retrieving all products:", error);

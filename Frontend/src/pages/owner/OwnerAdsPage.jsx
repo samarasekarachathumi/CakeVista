@@ -218,8 +218,13 @@ export default function OwnerAdsPage() {
               name="title"
               rules={[{ required: true, message: "Please enter a title" }]}
             >
+
               <Input placeholder="e.g. Weekend Discount Promo" />
             </Form.Item>
+            <Form.Item label="Image" name="imageUrl">
+              <Input type="file" onChange={(e) => setImages(e.target.files)} />
+            </Form.Item>
+
             <Form.Item label="Description" name="description">
               <Input.TextArea rows={3} placeholder="Optional description" />
             </Form.Item>

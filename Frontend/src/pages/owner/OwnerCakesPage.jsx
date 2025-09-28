@@ -115,7 +115,12 @@ export default function OwnerCakesPage() {
     }
 
     const imageUrls = await Promise.all(promises);
-    console.log(imageUrls);
+    const previousImageUrls =
+      editingCake && editingCake.images ? editingCake.images : [];
+    console.log(imageUrls, previousImageUrls);
+    imageUrls.push(...previousImageUrls);
+
+    // Extract customization options
 
     const {
       colors,
@@ -470,7 +475,7 @@ export default function OwnerCakesPage() {
           <Row gutter={16}>
             <Col span={12}>
               {renderOptionList("Toppings:", ["customization", "toppings"])}
-            </Col>
+            </Col> 
             <Col span={12}>
               <p>Sizes</p>
               <Form.List name={["customization", "size"]}>
@@ -488,11 +493,12 @@ export default function OwnerCakesPage() {
                           rules={[{ required: true, message: "Missing size" }]}
                         >
                           <Select placeholder="Select Size">
-                            <Option value="1Lbs">1Lbs</Option>
-                            <Option value="2Lbs">2Lbs</Option>
-                            <Option value="3Lbs">3Lbs</Option>
-                            <Option value="4Lbs">4Lbs</Option>
-                            <Option value="5Lbs">5Lbs</Option>
+                            
+                           
+                            <Option value="1.5Kg">1.5Kg</Option>
+                             <Option value="2Kg">2Kg</Option>
+                            <Option value="2.5Kg">2.5Kg</Option>
+                            <Option value="3Kg">3Kg</Option>
                           </Select>
                         </Form.Item>
                         <Form.Item

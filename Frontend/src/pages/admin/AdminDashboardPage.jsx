@@ -29,7 +29,7 @@ export default function AdminDashboardPage() {
 
     const getAllShopsForAdmin = async () => {
       try {
-        setLoading(true);
+        setLoading(true);//sp
         const response = await getAllShops();
         setShops(response.data);
       } catch (error) {
@@ -79,13 +79,13 @@ export default function AdminDashboardPage() {
     return counts;
   }, [users]);
 
-  const paymentSummary = Object.values(
+  const paymentSummary = Object.values(//Creates a new array from the values of an object
     rows.reduce((acc, item) => {
       if (item.paymentStatus === "completed" && item.shopDetails) {
         const shopName = item.shopDetails.shopName;
 
         if (!acc[shopName]) {
-          acc[shopName] = { name: shopName, value: 0 };
+          acc[shopName] = { name: shopName, value: 0 };//If this shop hasn’t been seen before, initialize an object with name and value (counter).
         }
 
         acc[shopName].value += 1;
@@ -177,29 +177,7 @@ export default function AdminDashboardPage() {
             </Row>
           </Card>
         </Col>
-        <Col xs={24} md={8}>
-           <Card>
-            <Row gutter={16}>
-              <div
-                style={{
-                  justifyContent: "center",
-                  display: "flex",
-                  width: "100%",
-                  fontWeight: 700,
-                }}
-              >
-              </div>
-            </Row>
-            <Row gutter={16}>
-              <Col span={12}>
-                <Statistic title="Delivered Orders" value={orders.filter(order => order.order_status === "Delivered").length} />
-              </Col>
-              <Col span={12}>
-                <Statistic title="Cancelled Orders" value={orders.filter(order => order.order_status === "Cancelled").length} />
-              </Col>
-            </Row>
-          </Card>
-        </Col>
+        
       </Row>
       <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
         <Col xs={24} md={14}>
@@ -218,7 +196,7 @@ export default function AdminDashboardPage() {
                     type="monotone"
                     dataKey="active"
                     name="Active Users"
-                    stroke="#73d13d"
+                    stroke="#3d5426ff"
                     strokeWidth={2}
                     dot={{ r: 3 }}
                   />

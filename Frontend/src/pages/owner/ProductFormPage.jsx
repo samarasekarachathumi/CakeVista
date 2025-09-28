@@ -65,11 +65,11 @@ export default function ProductFormPage() {
                     <Space key={key} style={{ display: 'flex', marginBottom: 8 }} align="baseline">
                       <Form.Item {...restField} name={[name, 'name']} rules={[{ required: true, message: 'Missing size' }]}>
                         <Select placeholder="Select Size">
-                          <Option value="1Lbs">1Lbs</Option>
-                          <Option value="2Lbs">2Lbs</Option>
-                          <Option value="3Lbs">3Lbs</Option>
-                          <Option value="4Lbs">4Lbs</Option>
-                          <Option value="5Lbs">5Lbs</Option>
+                          
+                          <Option value="2Lbs">2Kg</Option>
+                          <Option value="1Lbs">1.5Kg</Option>
+                          <Option value="3Lbs">3Kg</Option> 
+                        
                         </Select>
                       </Form.Item>
                       <Form.Item {...restField} name={[name, 'price']} rules={[{ required: true }]}>

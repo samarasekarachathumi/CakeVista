@@ -366,8 +366,8 @@ export default function ProductDetailPage() {
                   marginBottom: 4,
                 }}
               >
-                <Text>Base Price:</Text>
-                <Text>{formatCurrencyLKR(productData.basePrice)}</Text>
+                <Text>{productData.discountPrice ? "Discounted Price:" : "Base Price:"}</Text>
+                <Text>{formatCurrencyLKR(productData.discountPrice ? productData.discountPrice : productData.basePrice)}</Text>
               </div>
               {selectedSize?.price !== 0 && (
                 <div
@@ -380,7 +380,7 @@ export default function ProductDetailPage() {
                   <Text>Size ({selectedSize?.name}):</Text>
                   <Text>
                     {selectedSize?.price >= 0 ? "+" : ""}
-                    {formatCurrencyLKR(selectedSize?.price || 0)}
+                    {formatCurrencyLKR(selectedSize?.price || undefined)}
                   </Text>
                 </div>
               )}
@@ -395,7 +395,7 @@ export default function ProductDetailPage() {
                   <Text>Flavor ({selectedFlavor?.name}):</Text>
                   <Text>
                     {selectedFlavor?.price >= 0 ? "+" : ""}
-                    {formatCurrencyLKR(selectedFlavor?.price || 0)}
+                    {formatCurrencyLKR(selectedFlavor?.price || undefined)}
                   </Text>
                 </div>
               )}
@@ -414,11 +414,11 @@ export default function ProductDetailPage() {
                       }}
                     >
                       <Text>Topping ({toppingName}):</Text>
-                      <Text>+{formatCurrencyLKR(topping?.price || 0)}</Text>
+                      <Text>+{formatCurrencyLKR(topping?.price || undefined)}</Text>
                     </div>
                   );
                 })}
-              {cakeText &&
+              {/* {cakeText &&
                 cakeText.trim() &&
                 productData.customization.customMessage?.isAvailable && (
                   <div
@@ -437,7 +437,7 @@ export default function ProductDetailPage() {
                     </Text>
                   </div>
                 )}
-              <Divider style={{ margin: "8px 0" }} />
+              <Divider style={{ margin: "8px 0" }} /> */}
               <div
                 style={{
                   display: "flex",

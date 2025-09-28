@@ -28,6 +28,8 @@ export default function HomePage() {
     }
   };
 
+  console.log("Top Ads:", popupAd);
+
   const getLatestProductsForHome = async () => {
     try {
       const response = await getLatestProducts();
@@ -137,7 +139,7 @@ export default function HomePage() {
 
       {/* Popup Modal */}
       <Modal
-        open={popupOpen}
+        open={popupOpen && popupAd.data && popupAd.data.length > 0}
         onCancel={closePopup}
         footer={null}
         centered

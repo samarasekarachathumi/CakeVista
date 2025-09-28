@@ -58,7 +58,7 @@ export const getAllAdvertisements = async (req, res) => {
   if (!isAdmin(req)) {
     return res.status(403).json({
       success: false,
-      message: "Access denied. Only admins can update advertisements.",
+      message: "Access denied. Only admins can manage advertisements.",
     });
   }
   try {
@@ -156,7 +156,7 @@ export const deleteAdvertisement = async (req, res) => {
     return res.status(403).json({
       success: false,
       message: "Access denied. Only shop owners can delete advertisements.",
-    });
+    }); 
   }
   try {
     await Advertisement.findByIdAndDelete(

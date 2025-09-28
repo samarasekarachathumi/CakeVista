@@ -19,10 +19,10 @@ export const getAllShopOwners = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Shop owners fetched successfully.",
-      data: shopOwners.map((owner) => ({
+      data: shopOwners.map((owner) => ({ //convert mon doc to ob
         ...owner.toObject(),
         user: users.find((user) => user._id.equals(owner.userId)),
-      })),
+      })), 
     });
   } catch (error) {
     console.error("Error fetching shop owners:", error);
