@@ -9,8 +9,9 @@ import {
   Descriptions,
   List,
   Card,
+  Image,
 } from "antd";
-import {EditOutlined} from "@ant-design/icons";
+import { EditOutlined } from "@ant-design/icons";
 import { formatCurrencyLKR } from "../../shared/utils/currency.js";
 import {
   getOrdersByShop,
@@ -67,6 +68,9 @@ export default function OwnerOrdersPage() {
     setViewingOrder(null);
   };
 
+  const handleViewSampleImage = (imageUrl) => {
+    window.open(imageUrl, "_blank");
+  }
   const columns = [
     { title: "Order #", dataIndex: "_id", render: (id) => id.slice(-6) },
     {
@@ -242,6 +246,14 @@ export default function OwnerOrdersPage() {
               renderItem={(item) => (
                 <List.Item
                   actions={[
+                    <Button
+                      type="link"
+                      onClick={() =>
+                        handleViewSampleImage(item.uploadedImages?.[0])
+                      }
+                    >
+                      View Sample Image
+                    </Button>,
                     <Button
                       type="link"
                       onClick={() =>

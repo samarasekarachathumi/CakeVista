@@ -73,6 +73,7 @@ export default function PurchasePage() {
         productId: cartItem.productId,
         quantity: cartItem.quantity,
         customization: cartItem.customization,
+        uploadedImages: cartItem.uploadedUrl || [],
       }));
 
       const order = {
@@ -176,6 +177,13 @@ export default function PurchasePage() {
                               <div style={{ marginTop: 8 }}>
                                 <Text type="secondary" style={{ fontSize: 12 }}>
                                   Special Note: {item.customization.specialNote}
+                                </Text>
+                              </div>
+                            )}
+                            {item.uploadedUrl && (
+                              <div style={{ marginTop: 8 }}>
+                                <Text type="secondary" style={{ fontSize: 12 }}>
+                                  Customization Image Uploaded
                                 </Text>
                               </div>
                             )}

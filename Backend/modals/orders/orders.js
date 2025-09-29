@@ -26,6 +26,9 @@ const orderItemSchema = new mongoose.Schema(
       required: true,
       min: 1,
     },
+    uploadedImages: {
+      type: [String],
+    },
     selected_customizations: {
       color: selectedOptionSchema,
       flavour: selectedOptionSchema,
