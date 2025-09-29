@@ -9,6 +9,7 @@ import {
   Space,
   Tag,
   Typography,
+  Upload,
 } from "antd";
 import { useParams, useNavigate } from "react-router-dom";
 import { useCart } from "../../shared/contexts/CartContext.jsx";
@@ -17,6 +18,8 @@ import { formatCurrencyLKR } from "../../shared/utils/currency.js";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { getProductById } from "../../service/productService.js";
 // import { getProductById } from '../../shared/data/mockProducts.js'
+import { UploadOutlined } from "@ant-design/icons";
+import mediaUpload from "../../util/mediaUpload.jsx";
 
 const { Title, Text } = Typography;
 
@@ -34,6 +37,7 @@ export default function ProductDetailPage() {
   const [mainImage, setMainImage] = useState(null);
   const [cakeText, setCakeText] = useState("");
   const [specialNote, setSpecialNote] = useState("");
+  const [images, setImages] = useState([]);
 
   useEffect(() => {
     const fetchProductData = async () => {
@@ -111,28 +115,54 @@ export default function ProductDetailPage() {
     );
   };
 
-  const handleAddToCart = () => {
-    const variantId = `${productData._id}-${selectedSize.name}-${
-      selectedFlavor?.name || ''
-    }-${selectedToppings.sort().join("+")}-${cakeText}-${specialNote}`;
+  const handleAddToCart = async () => {
+    let uploadedUrl = null;
+    if (images) {
+      try {
+        for (let i = 0; i < images.length; i++) {
+          uploadedUrl = await mediaUpload(images[i]);
+        }
+      } catch (error) {
+        console.error("Image upload failed:", error);
+        showError("Error", "Failed to upload image. Please try again.");
+        return;
+      }
+    }
+
+    const variantId = [
+      productData?._id,
+      selectedSize?.name || "no-size",
+      selectedFlavor?.name || "no-flavor",
+      [...selectedToppings].sort().join("+") || "no-toppings",
+      cakeText || "no-text",
+      specialNote || "no-note",
+    ].join("-");
+
     const cartItem = {
       id: variantId,
-      productId: productData._id,
-      name: productData.name,
+      productId: productData?._id,
+      name: productData?.name,
       price: totalPrice,
       quantity: 1,
       imageUrl: mainImage,
-      categories: productData.categories,
+      categories: productData?.categories || [],
+      uploadedUrl,
       customization: {
-        size: selectedSize?.name,
-        flavor: selectedFlavor?.name,
-        toppings: selectedToppings,
-        cakeText,
-        specialNote,
+        size: selectedSize?.name || null,
+        flavor: selectedFlavor?.name || null,
+        toppings: selectedToppings || [],
+        cakeText: cakeText || "",
+        specialNote: specialNote || "",
       },
     };
-    addItem(cartItem, 1);
-    showSuccess("Success", "Item added to cart successfully!");
+
+    try {
+      addItem(cartItem, 1);
+      showSuccess("Success", "Item added to cart successfully!");
+    } catch (error) {
+      console.error("Add to cart failed:", error);
+      showError("Error", "Could not add item to cart. Please try again.");
+    }
   };
 
   const handleBuyNow = () => {
@@ -251,7 +281,7 @@ export default function ProductDetailPage() {
         </Text>
 
         <div style={{ marginTop: 24 }}>
-          {productData.customization?.size.length &&
+          {productData.customization?.size.length && (
             <>
               <Text strong style={{ display: "block", marginBottom: 8 }}>
                 Size:
@@ -271,7 +301,7 @@ export default function ProductDetailPage() {
                 ))}
               </Space>
             </>
-          }
+          )}
 
           {productData.customization?.flavor.length > 0 && (
             <>
@@ -333,7 +363,15 @@ export default function ProductDetailPage() {
             onChange={(e) => setCakeText(e.target.value)}
             placeholder="e.g., Happy Birthday!"
           />
-
+          <Text strong style={{ display: "block", marginBottom: 8 }}>
+            Upload Sample Image:
+          </Text>
+          <input
+            type="file"
+            onChange={(e) => {
+              setImages(e.target.files);
+            }}
+          />
           <Text strong style={{ display: "block", margin: "12px 0 8px" }}>
             Special Note:
           </Text>
@@ -366,8 +404,18 @@ export default function ProductDetailPage() {
                   marginBottom: 4,
                 }}
               >
-                <Text>{productData.discountPrice ? "Discounted Price:" : "Base Price:"}</Text>
-                <Text>{formatCurrencyLKR(productData.discountPrice ? productData.discountPrice : productData.basePrice)}</Text>
+                <Text>
+                  {productData.discountPrice
+                    ? "Discounted Price:"
+                    : "Base Price:"}
+                </Text>
+                <Text>
+                  {formatCurrencyLKR(
+                    productData.discountPrice
+                      ? productData.discountPrice
+                      : productData.basePrice
+                  )}
+                </Text>
               </div>
               {selectedSize?.price !== 0 && (
                 <div
@@ -414,7 +462,9 @@ export default function ProductDetailPage() {
                       }}
                     >
                       <Text>Topping ({toppingName}):</Text>
-                      <Text>+{formatCurrencyLKR(topping?.price || undefined)}</Text>
+                      <Text>
+                        +{formatCurrencyLKR(topping?.price || undefined)}
+                      </Text>
                     </div>
                   );
                 })}
@@ -462,7 +512,6 @@ export default function ProductDetailPage() {
             >
               Add to Cart
             </Button>
-          
           </div>
         </div>
 

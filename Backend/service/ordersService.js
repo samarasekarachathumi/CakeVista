@@ -19,7 +19,7 @@ export const createOrder = async (req, res) => {
     });
   }
   try {
-    const { orderItems, address, paymentMethod, instructions, customer_id } =
+    const { orderItems, address, paymentMethod, instructions } =
       req.body;
 
     if (!orderItems || orderItems.length === 0) {
@@ -112,6 +112,7 @@ export const createOrder = async (req, res) => {
             quantity: item.quantity,
             selected_customizations,
             price: itemPrice,
+            uploadedImages: item.uploadedImages || "",
           };
         })
       );
